@@ -14,3 +14,7 @@ connection()
   .catch((error) => {
     console.log(`DB Connection failed ${error}`);
   });
+
+app.get("/ping", (req, res) => {
+  res.status(200).json({ message: "ok" });
+});
