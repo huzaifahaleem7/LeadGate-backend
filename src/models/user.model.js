@@ -32,6 +32,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ["admin", "agent", "teamlead"],
+      default: "agent",
       required: true,
     },
     password: {
