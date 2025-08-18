@@ -83,7 +83,7 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User does not exist");
   }
 
-  const validatePassword = await user.isValidPassword(password);
+  const validatePassword = await user.isValidPassword(password.trim());
   if (!validatePassword) {
     throw new ApiError(400, "Please enter the correct password");
   }
@@ -100,7 +100,7 @@ const login = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: NODE_ENV,
   };
-
+  console.log(loginUser);
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -143,7 +143,7 @@ const logout = asyncHandler(async (req, res) => {
 //refreshToken
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
+    req.cookies?.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
     throw new ApiError(401, "Unauthorized access, no refresh token provided");
@@ -162,7 +162,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, "User not found");
   }
 
-  const { accessToken, refreshToken } = await generateAccessandRefreshToken(user._id);
+  const { accessToken, refreshToken } = await generateAccessandRefreshToken(
+    user._id
+  );
 
   const options = {
     httpOnly: true,
@@ -176,7 +178,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        { accessToken, refreshToken },
+        {
+          user: {
+            _id: user._id,
+            email: user.email,
+            username: user.username,
+            fullName: user.fullName,
+            role: user.role,
+          },
+          accessToken,
+          refreshToken,
+        },
         "Access token refreshed successfully"
       )
     );
@@ -198,6 +210,5 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 // | adminMiddleware    | N/A                 | Protect admin routes                        |
 // | teamLeadMiddleware | N/A                 | Protect team lead routes                    |
 // | agentMiddleware    | N/A                 | Protect agent routes                        |
-
 
 export { signup, login, logout, refreshAccessToken };
