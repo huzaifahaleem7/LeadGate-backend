@@ -36,8 +36,8 @@ const leadSchema = new Schema(
       default: "",
     },
     dncStatus: {
-      type: Boolean,
-      default: false,
+      type: String,
+      default: [],
     },
 
     status: {

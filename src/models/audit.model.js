@@ -5,16 +5,16 @@ const auditSchema = new Schema(
     leadId: {
       type: Schema.Types.ObjectId,
       ref: "Lead",
-      required: true,
+      required: false,
     },
-    agentId: {
+    agent: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     tcpaConsent: {
       type: Boolean,
-      required: true,
+      // required: true,
     },
     playbackUrl: {
       type: String,
@@ -26,12 +26,13 @@ const auditSchema = new Schema(
     },
     recencyCheckPassed: {
       type: Boolean,
-      required: true,
+      // required: true,
     }, // was recency check ok?
     finalDecision: {
       type: String,
       enum: ["proceed", "wait", "block"],
-      required: true,
+      default: "wait"
+      // required: true,
     },
     reason: {
       type: String,
@@ -39,12 +40,7 @@ const auditSchema = new Schema(
     notes: {
       type: String,
     }, // any agent notes
-    apiResponse: {
-      type: Object,
-      default: {},
-    }, // store full Jornaya/DNC API response if needed
   },
-
   {
     timestamps: true,
   }
