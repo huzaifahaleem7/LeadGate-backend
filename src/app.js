@@ -23,8 +23,8 @@ app.use(cookieParser());
 import userRouter from './routes/user.route.js'
 app.use("/api/v1/user", userRouter)
 
-//agent Router
-import agentRouter from './routes/agent.route.js'
-app.use("/api/v1/agent", agentRouter)
+//lead Router
+import leadRouter from './routes/lead.route.js'
+app.use("/api/v1/lead", leadRouter)
 
 export default app;

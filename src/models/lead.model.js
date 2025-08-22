@@ -15,8 +15,7 @@ const leadSchema = new Schema(
     phone: {
       type: String,
       required: true,
-      unique: true,
-      match: [/^[0-9]{10,15}$/, "Invalid phone number format"],
+      match: [/^\+?[0-9]{10,15}$/, "Invalid phone number format"],
     },
     zipCode: {
       type: String,
@@ -40,16 +39,16 @@ const leadSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    
+
     status: {
       type: String,
       enum: ["pending", "accepted", "rejected"],
       default: "pending",
     },
-
-    createdAt: {
-      type: Date,
-      default: Date.now,
+    agent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
   },
   {
