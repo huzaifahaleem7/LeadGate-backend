@@ -1,4 +1,3 @@
-import { Lead } from "../models/lead.model.js";
 import ApiError from "../utils/ApiError.js";
 import axios from "axios";
 import { BLA_API } from "../constants.js";
@@ -10,10 +9,9 @@ const runDNCCheck = async (leadId, phone) => {
     );
     const dncCode = res.data.code || null;
 
-    await Lead.findByIdAndUpdate(leadId, { dncStatus: dncCode });
     console.log(`DNC check completed for ${phone}: ${dncCode}`);
 
-    const isDNC = !!dncCode;
+    const isDNC = dncCode && dncCode.toLowerCase() !== "none";
     return { isDNC, dncCode };
   } catch (error) {
     console.error("DNC check failed:", error.message);

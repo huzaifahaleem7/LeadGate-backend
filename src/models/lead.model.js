@@ -27,7 +27,7 @@ const leadSchema = new Schema(
       unique: true,
     },
 
-    tcpaConsent: {
+    tcpConsent: {
       type: Boolean,
       default: false,
     },

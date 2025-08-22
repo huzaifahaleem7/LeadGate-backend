@@ -4,6 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { Lead } from "../models/lead.model.js";
 import { Audit } from "../models/audit.model.js";
 import runDNCCheck from "../services/dncService.service.js";
+import fetchJornayaData from "../services/jornayaServices.service.js";
 
 //addLead
 const addLead = asyncHandler(async (req, res) => {
@@ -11,7 +12,10 @@ const addLead = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(401, "Unauthorized access");
   }
+
   const { firstName, lastName, phone, zipCode, jornayaId } = req.body;
+
+  // Validation
   if (
     [firstName, lastName, phone, zipCode, jornayaId].some(
       (field) => !field || field.trim() === ""
@@ -19,6 +23,8 @@ const addLead = asyncHandler(async (req, res) => {
   ) {
     throw new ApiError(400, "All fields are required");
   }
+
+  // Duplicate check
   const existingLead = await Lead.findOne({
     $or: [{ phone }, { jornayaId }],
   });
@@ -26,9 +32,11 @@ const addLead = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Lead already exists");
   }
 
+  // DNC Check
   let dncResult;
   try {
     dncResult = await runDNCCheck(null, phone);
+
     if (dncResult.isDNC) {
       const dncAudit = await Audit.create({
         leadId: null,
@@ -40,7 +48,7 @@ const addLead = asyncHandler(async (req, res) => {
       if (!dncAudit) {
         throw new ApiError(
           500,
-          "Something went wrong while created DNC Audit "
+          "Something went wrong while creating DNC Audit"
         );
       }
 
@@ -53,6 +61,60 @@ const addLead = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to verify DNC status");
   }
 
+  // Jornaya Check
+  let jornayataData;
+  try {
+    jornayataData = await fetchJornayaData(jornayaId);
+
+    // Playback check
+    if (!jornayataData.playbackAvailable) {
+      const jornayaPlayBack = await Audit.create({
+        leadId: null,
+        agent: user._id,
+        dncStatus: false,
+        playbackUrl: "",
+        finalDecision: "wait",
+        reason: "Playback missing. Agent needs to re-verify.",
+      });
+
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            { jornayaPlayBack },
+            "Playback missing, sent back to agent."
+          )
+        );
+    }
+
+    // TCP check
+    if (!jornayataData.tcpConsent) {
+      const jornayaTcpConsent = await Audit.create({
+        leadId: null,
+        agent: user._id,
+        dncStatus: false,
+        tcpConsent: false,
+        finalDecision: "wait",
+        reason: "TCP Consent missing. Agent needs to re-verify.",
+      });
+
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(
+            400,
+            { jornayaTcpConsent },
+            "TCP Consent missing. Agent needs to re-verify."
+          )
+        );
+    }
+  } catch (error) {
+    console.error("Jornaya check failed:", error.message);
+    throw new ApiError(500, "Failed to verify Jornaya consent");
+  }
+
+  // Lead Creation
   const lead = await Lead.create({
     firstName,
     lastName,
@@ -61,17 +123,21 @@ const addLead = asyncHandler(async (req, res) => {
     jornayaId,
     agent: user._id,
     dncStatus: dncResult.dncCode || null,
+    tcpConsent: jornayataData.tcpConsent,
+    playbackUrl: jornayataData.playbackUrl || "",
   });
+
   if (!lead) {
-    throw new ApiError(500, "Something went wrong");
+    throw new ApiError(500, "Something went wrong while creating lead");
   }
 
+  // Audit Log
   await Audit.create({
     leadId: lead._id,
     agent: user._id,
-    tcpaConsent: false,
-    playbackUrl: "",
-    dncStatus: false,
+    tcpConsent: jornayataData.tcpConsent,
+    playbackUrl: jornayataData.playbackUrl || "",
+    dncStatus: dncResult.isDNC || false,
     recencyCheckPassed: true,
     finalDecision: "proceed",
     reason: "Lead created successfully",

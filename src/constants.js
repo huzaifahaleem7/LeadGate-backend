@@ -13,3 +13,9 @@ export const BLA_API = {
   URL: process.env.BLA_URL,
   KEY: process.env.BLA_KEY
 };
+//Jornaya_Api
+export const JORNAYA_API = {
+  URL: process.env.JORNAYA_URL,
+  USER: process.env.JORNAYA_USER,
+  PASS: process.env.JORNAYA_PASS,
+};

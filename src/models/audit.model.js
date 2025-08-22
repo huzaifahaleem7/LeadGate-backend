@@ -12,7 +12,7 @@ const auditSchema = new Schema(
       ref: "User",
       required: true,
     },
-    tcpaConsent: {
+    tcpConsent: {
       type: Boolean,
       // required: true,
     },
