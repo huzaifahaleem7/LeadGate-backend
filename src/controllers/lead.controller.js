@@ -6,6 +6,7 @@ import { Audit } from "../models/audit.model.js";
 import runDNCCheck from "../services/dncService.service.js";
 import fetchJornayaData from "../services/jornayaServices.service.js";
 
+//addLead
 const addLead = asyncHandler(async (req, res) => {
   const user = req.user;
   console.log("received payload", req.body);

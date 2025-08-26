@@ -3,7 +3,8 @@ import {
     signup,
     login,
     logout,
-    refreshAccessToken
+    refreshAccessToken,
+    getUserProfile
 } from '../controllers/user.controller.js'
 import verifyJwt from '../middlewares/auth.middleware.js'
 
@@ -20,6 +21,9 @@ router.route("/logout").post (verifyJwt, logout)
 
 //refreshAccessToken
 router.route("/refreshAccessToken").post(refreshAccessToken)
+
+//getUserProfile
+router.route("/me").get(verifyJwt, getUserProfile);
 
 
 export default router

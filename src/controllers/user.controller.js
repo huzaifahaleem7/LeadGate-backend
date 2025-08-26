@@ -194,6 +194,29 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
+//getUserProfile
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    throw new ApiError(401, "Unauthorized access");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+        },
+      },
+      "User profile fetched correctly"
+    )
+  );
+});
+
 // | Feature / Endpoint | Accessible By       | Notes                                       |
 // | ------------------ | ------------------- | ------------------------------------------- |
 // | signup             | Public              | Default role: agent                         |
@@ -211,4 +234,4 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 // | teamLeadMiddleware | N/A                 | Protect team lead routes                    |
 // | agentMiddleware    | N/A                 | Protect agent routes                        |
 
-export { signup, login, logout, refreshAccessToken };
+export { signup, login, logout, refreshAccessToken, getUserProfile };
