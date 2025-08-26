@@ -6,9 +6,10 @@ import { Audit } from "../models/audit.model.js";
 import runDNCCheck from "../services/dncService.service.js";
 import fetchJornayaData from "../services/jornayaServices.service.js";
 
-//addLead
 const addLead = asyncHandler(async (req, res) => {
   const user = req.user;
+  console.log("received payload", req.body);
+
   if (!user) {
     throw new ApiError(401, "Unauthorized access");
   }
@@ -62,19 +63,39 @@ const addLead = asyncHandler(async (req, res) => {
   }
 
   // Jornaya Check
-  let jornayataData;
   try {
-    jornayataData = await fetchJornayaData(jornayaId);
+    const jornayaData = await fetchJornayaData(jornayaId);
+
+    const tcpConsentBool = jornayaData.tcpConsent; // ✅ from helper
+    const playbackUrl = jornayaData.playbackAvailable
+      ? jornayaData.raw.Playback
+      : "";
+
+    let errors = [];
+    let auditData = {
+      leadId: null,
+      agent: user._id,
+      dncStatus: false,
+      playbackUrl,
+      tcpConsent: tcpConsentBool,
+      finalDecision: "wait",
+    };
 
     // Playback check
-    if (!jornayataData.playbackAvailable) {
-      const jornayaPlayBack = await Audit.create({
-        leadId: null,
-        agent: user._id,
-        dncStatus: false,
-        playbackUrl: "",
-        finalDecision: "wait",
-        reason: "Playback missing. Agent needs to re-verify.",
+    if (!playbackUrl) {
+      errors.push("Playback missing");
+    }
+
+    // TCP Consent check
+    if (!tcpConsentBool) {
+      errors.push("TCP Consent missing");
+    }
+
+    // If any error → audit + response
+    if (errors.length > 0) {
+      const jornayaAudit = await Audit.create({
+        ...auditData,
+        reason: errors.join(" | "),
       });
 
       return res
@@ -82,70 +103,49 @@ const addLead = asyncHandler(async (req, res) => {
         .json(
           new ApiResponse(
             400,
-            { jornayaPlayBack },
-            "Playback missing, sent back to agent."
+            { jornayaAudit },
+            `Jornaya check failed: ${errors.join(", ")}`
           )
         );
     }
 
-    // TCP check
-    if (!jornayataData.tcpConsent) {
-      const jornayaTcpConsent = await Audit.create({
-        leadId: null,
-        agent: user._id,
-        dncStatus: false,
-        tcpConsent: false,
-        finalDecision: "wait",
-        reason: "TCP Consent missing. Agent needs to re-verify.",
-      });
+    // ✅ Lead Creation
+    const lead = await Lead.create({
+      firstName,
+      lastName,
+      phone,
+      zipCode,
+      jornayaId,
+      agent: user._id,
+      dncStatus: dncResult.dncCode || null,
+      tcpConsent: tcpConsentBool,
+      playbackUrl,
+    });
 
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(
-            400,
-            { jornayaTcpConsent },
-            "TCP Consent missing. Agent needs to re-verify."
-          )
-        );
+    if (!lead) {
+      throw new ApiError(500, "Something went wrong while creating lead");
     }
+
+    // Audit Log
+    await Audit.create({
+      leadId: lead._id,
+      agent: user._id,
+      tcpConsent: tcpConsentBool,
+      playbackUrl,
+      dncStatus: dncResult.isDNC || false,
+      recencyCheckPassed: true,
+      finalDecision: "proceed",
+      reason: "Lead created successfully",
+    });
+
+    console.log(lead);
+    return res
+      .status(201)
+      .json(new ApiResponse(201, { lead }, "Lead Created Successfully"));
   } catch (error) {
     console.error("Jornaya check failed:", error.message);
     throw new ApiError(500, "Failed to verify Jornaya consent");
   }
-
-  // Lead Creation
-  const lead = await Lead.create({
-    firstName,
-    lastName,
-    phone,
-    zipCode,
-    jornayaId,
-    agent: user._id,
-    dncStatus: dncResult.dncCode || null,
-    tcpConsent: jornayataData.tcpConsent,
-    playbackUrl: jornayataData.playbackUrl || "",
-  });
-
-  if (!lead) {
-    throw new ApiError(500, "Something went wrong while creating lead");
-  }
-
-  // Audit Log
-  await Audit.create({
-    leadId: lead._id,
-    agent: user._id,
-    tcpConsent: jornayataData.tcpConsent,
-    playbackUrl: jornayataData.playbackUrl || "",
-    dncStatus: dncResult.isDNC || false,
-    recencyCheckPassed: true,
-    finalDecision: "proceed",
-    reason: "Lead created successfully",
-  });
-
-  return res
-    .status(201)
-    .json(new ApiResponse(201, { lead }, "Lead Created Successfully"));
 });
 
 //getLeadById
