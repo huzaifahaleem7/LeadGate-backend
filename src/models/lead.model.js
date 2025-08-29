@@ -42,7 +42,7 @@ const leadSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["pending", "accepted", "rejected"],
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
     agent: {

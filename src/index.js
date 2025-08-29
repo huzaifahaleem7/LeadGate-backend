@@ -5,6 +5,12 @@ import app from "./app.js";
 import connection from "./db/index.js";
 import { port } from "./constants.js";
 
+// Add test route BEFORE starting the server
+app.get("/ping", (req, res) => {
+  res.status(200).json({ message: "ok" });
+});
+
+// Connect to DB and start server
 connection()
   .then(() => {
     app.listen(port, () => {
@@ -12,9 +18,5 @@ connection()
     });
   })
   .catch((error) => {
-    console.log(`DB Connection failed ${error}`);
+    console.error(`DB Connection failed: ${error}`);
   });
-
-app.get("/ping", (req, res) => {
-  res.status(200).json({ message: "ok" });
-});
