@@ -2,7 +2,7 @@ import ApiError from "../utils/ApiError.js";
 import axios from "axios";
 import { BLA_API } from "../constants.js";
 
-const runDNCCheck = async (leadId, phone) => {
+const runDNCCheck = async (phone) => {
   try {
     const res = await axios.get(
       `${BLA_API.URL}?key=${BLA_API.KEY}&ver=v3&resp=json&phone=${phone}`
