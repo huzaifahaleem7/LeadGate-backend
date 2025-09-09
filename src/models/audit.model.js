@@ -28,12 +28,6 @@ const auditSchema = new Schema(
       type: Boolean,
       // required: true,
     }, // was recency check ok?
-    finalDecision: {
-      type: String,
-      enum: ["proceed", "wait", "block"],
-      default: "wait"
-      // required: true,
-    },
     reason: {
       type: String,
     }, // optional explanation for the decision

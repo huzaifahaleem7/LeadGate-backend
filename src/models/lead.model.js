@@ -39,12 +39,6 @@ const leadSchema = new Schema(
       type: String,
       default: [],
     },
-
-    status: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-    },
     agent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

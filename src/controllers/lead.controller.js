@@ -86,7 +86,6 @@ const addLead = asyncHandler(async (req, res) => {
         dncStatus: false,
         playbackUrl,
         tcpConsent: tcpConsentBool,
-        finalDecision: "wait",
         reason: errors.join(" | "),
       });
       return res
@@ -121,7 +120,6 @@ const addLead = asyncHandler(async (req, res) => {
       playbackUrl,
       dncStatus: dncResult.isDNC || false,
       recencyCheckPassed: true,
-      finalDecision: "proceed",
       reason: "Lead created successfully",
     });
 
