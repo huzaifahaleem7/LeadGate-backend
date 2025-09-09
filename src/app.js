@@ -10,6 +10,7 @@ import path from "path";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import userRouter from "./routes/user.route.js";
 import leadRouter from "./routes/lead.route.js";
+import parseMessageRouter from "./routes/parseMessage.route.js"
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(cookieParser());
 // -------------------------
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/lead", leadRouter);
+app.use("/api/v1/message", parseMessageRouter)
 
 // Error handling middleware (moved after API routes)
 app.use(errorMiddleware);
