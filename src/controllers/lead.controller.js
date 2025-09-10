@@ -45,7 +45,11 @@ const addLead = asyncHandler(async (req, res) => {
 
   // Duplicate check
   const existingLead = await Lead.findOne({ $or: [{ phone }, { jornayaId }] });
-  if (existingLead) throw new ApiError(400, "Lead already exists");
+  if (existingLead) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { existingLead }, "Lead already exists"));
+  }
 
   // DNC Check
   let dncResult;
